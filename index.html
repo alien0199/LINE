@@ -6,7 +6,7 @@
     <title>Auto Weather In Buri 🌤️</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;600&display=swap" rel="stylesheet">
     <style>
-        /* ดีไซน์น่ารัก สดใส สไตล์พาสเทล (Auto Weather In Buri Theme) */
+/* ดีไซน์น่ารัก สดใส สไตล์พาสเทล (Auto Weather In Buri Theme) */
         body {
             font-family: 'Kanit', sans-serif;
             background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
@@ -62,14 +62,59 @@
 
         .weather-icon img { width: 80px; height: 80px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
         
-        .temp-big { font-size: 2.8em; font-weight: bold; color: #4facfe; line-height: 1; }
-        .weather-desc { font-size: 1em; color: #666; margin-top: 5px; }
+        .temp-big {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: clamp(3.6rem, 12vw, 5.2rem);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: #2e93ff;
+            padding: 10px 14px;
+            border-radius: 18px;
+            background: linear-gradient(90deg, rgba(31,162,255,0.14), rgba(18,216,250,0.10));
+            box-shadow: 0 12px 26px rgba(31,162,255,0.14);
+            text-shadow: 0 10px 18px rgba(46,147,255,0.20);
+            font-variant-numeric: tabular-nums;
+        }
+        .weather-desc {
+            font-size: 1.05em;
+            font-weight: 650;
+            color: #4b5563;
+            margin-top: 10px;
+        }
 
         /* ส่วนฝุ่น PM2.5 */
         .pm-label { font-size: 0.9em; color: #888; text-align: left; }
-        .pm-value { font-size: 2.2em; font-weight: bold; color: #333; }
-        .pm-unit { font-size: 0.5em; color: #999; font-weight: normal; }
-        .pm-status { font-size: 0.9em; font-weight: 600; margin-top: 5px; }
+        .pm-value {
+            display: inline-flex;
+            align-items: baseline;
+            justify-content: center;
+            font-size: clamp(2.8rem, 10vw, 4.6rem);
+            font-weight: 950;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            color: #111827;
+            padding: 12px 16px;
+            border-radius: 18px;
+            background: rgba(0, 0, 0, 0.03);
+            box-shadow: 0 12px 26px rgba(0,0,0,0.08);
+            text-shadow: 0 10px 18px rgba(0,0,0,0.10);
+            font-variant-numeric: tabular-nums;
+        }
+        .pm-unit {
+            font-size: 0.38em;
+            color: #6b7280;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .pm-status {
+            font-size: 1.05em;
+            font-weight: 750;
+            margin-top: 12px;
+            letter-spacing: 0.01em;
+        }
 
         /* สีสถานะฝุ่น */
         .status-good { color: #00b894; }      /* ดีมาก */
@@ -141,7 +186,14 @@
         /* ปรับ badge ให้รองรับข้อความยาว */
         .location-badge { max-width: 100%; white-space: normal; line-height: 1.25; }
 
-</style>
+        @media (max-width: 420px) {
+            .card { padding: 26px 16px; border-radius: 30px; }
+            .data-box { padding: 22px; border-radius: 24px; }
+            .temp-big { font-size: clamp(3.9rem, 14vw, 5.5rem); }
+            .pm-value { font-size: clamp(3.1rem, 12vw, 4.9rem); }
+        }
+
+    </style>
 </head>
 <body>
 
