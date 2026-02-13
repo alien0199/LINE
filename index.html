@@ -345,12 +345,35 @@
                 const pm25 = airData?.current?.pm2_5;
                 if (typeof pm25 !== "number") throw new Error("ไม่พบค่า PM2.5");
 
-                document.getElementById('pm25').innerText = Math.round(pm25);
-                document.getElementById('pm25-status').innerText = "อัปเดตแล้ว";
+                const pm = Math.round(pm25);
+
+                // แสดงค่า
+                const pmEl = document.getElementById('pm-val');
+                if (pmEl) pmEl.innerHTML = `${pm} <span class="pm-unit">μg/m³</span>`;
+
+                // สถานะ (สี)
+                const statusEl = document.getElementById('pm-status');
+                if (statusEl) {
+                    let label = "อัปเดตแล้ว";
+                    statusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
+
+                    // แบ่งช่วงแบบง่าย ๆ เพื่อให้ผู้ใช้เข้าใจเร็ว (ไม่ใช่มาตรฐานทางการ)
+                    if (pm <= 10) { label = "ดีมาก"; statusEl.classList.add('status-good'); }
+                    else if (pm <= 25) { label = "ปานกลาง"; statusEl.classList.add('status-moderate'); }
+                    else if (pm <= 50) { label = "เริ่มมีผลต่อสุขภาพ"; statusEl.classList.add('status-bad'); }
+                    else { label = "อันตราย"; statusEl.classList.add('status-vbad'); }
+
+                    statusEl.innerText = label;
+                }
             } catch (error) {
                 console.error("Air Quality Error:", error);
-                document.getElementById('pm25').innerText = "--";
-                document.getElementById('pm25-status').innerText = "ไม่พบข้อมูลฝุ่น";
+                const pmEl = document.getElementById('pm-val');
+                if (pmEl) pmEl.innerHTML = `-- <span class="pm-unit">μg/m³</span>`;
+                const statusEl = document.getElementById('pm-status');
+                if (statusEl) {
+                    statusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
+                    statusEl.innerText = "ไม่พบข้อมูลฝุ่น";
+                }
             }
         }
 
