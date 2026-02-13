@@ -180,17 +180,17 @@
 
     <script>
         // --- 🔒 การตั้งค่า (Configuration) ---
-        // พิกัด "ค่าเริ่มต้น" ของอำเภออินทร์บุรี (อ้างอิงพิกัดศูนย์กลาง/ที่ว่าการอำเภอ)
+        // พิกัดเริ่มต้น "ตลาดอินทร์บุรี" (อ้างอิงจาก Google Maps)
         // หมายเหตุ: หมู่ 6 เป็นพื้นที่ย่อย—ถ้าต้องการ "แม่นยำที่สุด" ให้กดปุ่ม 📡 ใช้ GPS
         const DEFAULT_LAT = 15.012146709989606;
         const DEFAULT_LON = 100.33121519335744;
+        const DEFAULT_LABEL = 'พิกัดเริ่มต้นตลาดอินทร์บุรี';
 
         let LAT = DEFAULT_LAT;
         let LON = DEFAULT_LON;
 
         const LOCATION_LABEL = 'หมู่ 6 ต.อินทร์บุรี';
         const LOCATION_FULL = 'หมู่ 6 ตำบลอินทร์บุรี อำเภออินทร์บุรี จังหวัดสิงห์บุรี 16110';
-        const API_KEY = '8f195d69782e5f85fedd737fb5c1bbe5'; // Key ของคุณ
 
         function mapUrl(lat, lon) {
             return `https://www.google.com/maps?q=${lat},${lon}`;
@@ -218,7 +218,7 @@
             localStorage.removeItem('customLon');
             LAT = DEFAULT_LAT;
             LON = DEFAULT_LON;
-            updateLocationUI('ค่าเริ่มต้น');
+            updateLocationUI(DEFAULT_LABEL);
             fetchData();
         }
 
@@ -239,7 +239,7 @@
                 (err) => {
                     console.error('GPS Error:', err);
                     alert('ขออนุญาตตำแหน่งไม่สำเร็จ (ลองอนุญาต Location แล้วกดใหม่)');
-                    updateLocationUI('ค่าเริ่มต้น');
+                    updateLocationUI(DEFAULT_LABEL);
                 },
                 {
                     enableHighAccuracy: true,
@@ -256,59 +256,101 @@
             LAT = savedLat;
             LON = savedLon;
         }
-        updateLocationUI(LAT === DEFAULT_LAT && LON === DEFAULT_LON ? 'ค่าเริ่มต้น' : 'ตำแหน่งที่บันทึกไว้');
+        updateLocationUI(LAT === DEFAULT_LAT && LON === DEFAULT_LON ? DEFAULT_LABEL : 'ตำแหน่งที่บันทึกไว้');
 
+
+        const WEATHER_CODE_TH = {
+            0: "ท้องฟ้าโปร่ง",
+            1: "มีเมฆเล็กน้อย",
+            2: "มีเมฆบางส่วน",
+            3: "เมฆมาก",
+            45: "หมอก",
+            48: "หมอก (มีน้ำค้างแข็ง)",
+            51: "ละอองฝนเบา",
+            53: "ละอองฝนปานกลาง",
+            55: "ละอองฝนหนัก",
+            56: "ฝนเยือกแข็งเบา",
+            57: "ฝนเยือกแข็งหนัก",
+            61: "ฝนเบา",
+            63: "ฝนปานกลาง",
+            65: "ฝนหนัก",
+            66: "ฝนเยือกแข็งเบา",
+            67: "ฝนเยือกแข็งหนัก",
+            71: "หิมะเบา",
+            73: "หิมะปานกลาง",
+            75: "หิมะหนัก",
+            77: "เม็ดหิมะ",
+            80: "ฝนโปรยเบา",
+            81: "ฝนโปรยปานกลาง",
+            82: "ฝนโปรยหนัก",
+            85: "หิมะโปรยเบา",
+            86: "หิมะโปรยหนัก",
+            95: "พายุฝนฟ้าคะนอง",
+            96: "พายุฝนฟ้าคะนอง (ลูกเห็บเล็ก)",
+            99: "พายุฝนฟ้าคะนอง (ลูกเห็บหนัก)"
+        };
+
+        async function fetchJson(url, timeoutMs = 12000) {
+            const controller = new AbortController();
+            const t = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                const data = await res.json().catch(() => null);
+                if (!res.ok) {
+                    const reason = data?.reason || data?.error || data?.message || `HTTP ${res.status}`;
+                    throw new Error(reason);
+                }
+                return data;
+            } finally {
+                clearTimeout(t);
+            }
+        }
 
         async function fetchData() {
             const updateTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('last-update').innerText = `อัปเดตเมื่อ: ${updateTime} น.`;
-            
-            // 1. ดึงสภาพอากาศ (Current Weather)
+
+            // 1) สภาพอากาศ (Open-Meteo: ไม่ต้องใช้ API Key)
             try {
-                const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=th`);
-                const wData = await weatherRes.json();
-                
-                document.getElementById('temp').innerText = Math.round(wData.main.temp) + "°";
-                document.getElementById('weather-desc').innerText = wData.weather[0].description;
-                document.getElementById('humidity').innerText = wData.main.humidity;
-                
-                const iconCode = wData.weather[0].icon;
-                document.getElementById('weather-icon').innerHTML = `<img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="weather">`;
-            } catch (error) {
-                console.error("Weather Error:", error);
-            }
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok`;
+                const wData = await fetchJson(weatherUrl);
 
-            // 2. ดึงค่าฝุ่น PM2.5 (Air Pollution API)
-            try {
-                const airRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${LAT}&lon=${LON}&appid=${API_KEY}`);
-                const airData = await airRes.json();
-                
-                // OpenWeatherMap ให้ค่า pm2_5 เป็นหน่วย μg/m3 ตรงๆ
-                const pm25 = airData.list[0].components.pm2_5;
-                const pmElement = document.getElementById('pm-val');
-                const statusElement = document.getElementById('pm-status');
+                const temp = wData?.current?.temperature_2m;
+                const humidity = wData?.current?.relative_humidity_2m;
+                const code = wData?.current?.weather_code;
 
-                pmElement.innerHTML = `${pm25.toFixed(1)} <span class="pm-unit">μg/m³</span>`;
+                if (typeof temp !== "number") throw new Error("ไม่พบอุณหภูมิ");
+                document.getElementById('temp').innerText = Math.round(temp) + "°";
 
-                // เกณฑ์สีและคำแนะนำ (อ้างอิงมาตรฐานไทย)
-                statusElement.className = 'pm-status'; // Reset class
-                if (pm25 <= 25) {
-                    statusElement.innerText = "อากาศดีมาก 💚";
-                    statusElement.classList.add('status-good');
-                } else if (pm25 <= 37.5) {
-                    statusElement.innerText = "คุณภาพดี 💛";
-                    statusElement.classList.add('status-moderate');
-                } else if (pm25 <= 75) {
-                    statusElement.innerText = "เริ่มมีผลกระทบ 🧡";
-                    statusElement.classList.add('status-bad');
+                if (typeof humidity === "number") {
+                    document.getElementById('humidity').innerText = Math.round(humidity) + "%";
                 } else {
-                    statusElement.innerText = "อันตราย 🔴";
-                    statusElement.classList.add('status-vbad');
+                    document.getElementById('humidity').innerText = "--%";
                 }
 
+                const desc = (code in WEATHER_CODE_TH) ? WEATHER_CODE_TH[code] : `รหัสอากาศ: ${code ?? "-"}`;
+                document.getElementById('weather-desc').innerText = desc;
             } catch (error) {
-                console.error("PM2.5 Error:", error);
-                document.getElementById('pm-status').innerText = "ไม่พบข้อมูลฝุ่น";
+                console.error("Weather Error:", error);
+                document.getElementById('temp').innerText = "--°";
+                document.getElementById('humidity').innerText = "--%";
+                document.getElementById('weather-desc').innerText = "ดึงข้อมูลอากาศไม่ได้";
+            }
+
+            // 2) ฝุ่น PM2.5 (Open-Meteo Air Quality: ไม่ต้องใช้ API Key)
+            try {
+                const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`;
+                const airData = await fetchJson(airUrl);
+
+                const pm25 = airData?.current?.pm2_5;
+                if (typeof pm25 !== "number") throw new Error("ไม่พบค่า PM2.5");
+
+                document.getElementById('pm25').innerText = Math.round(pm25);
+                document.getElementById('pm25-status').innerText = "อัปเดตแล้ว";
+            } catch (error) {
+                console.error("Air Quality Error:", error);
+                document.getElementById('pm25').innerText = "--";
+                document.getElementById('pm25-status').innerText = "ไม่พบข้อมูลฝุ่น";
             }
         }
 
