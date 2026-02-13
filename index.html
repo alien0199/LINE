@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Weather In Buri 🌤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ดีไซน์น่ารัก สดใส สไตล์พาสเทล (Auto Weather In Buri Theme) */
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 15px;
+            color: #444;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(10px);
+            border-radius: 35px;
+            padding: 30px 20px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 2px solid #fff;
+        }
+
+        .location-badge {
+            background: #ff9a9e;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
+        }
+
+        h1 { margin: 0; color: #555; font-size: 1.6em; font-weight: 600; }
+        .timestamp { font-size: 0.8em; color: #888; margin-bottom: 25px; }
+
+        /* กล่องข้อมูล */
+        .data-box {
+            background: #ffffff;
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+        .data-box:active { transform: scale(0.98); }
+
+        .weather-icon img { width: 80px; height: 80px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        
+        .temp-big { font-size: 2.8em; font-weight: bold; color: #4facfe; line-height: 1; }
+        .weather-desc { font-size: 1em; color: #666; margin-top: 5px; }
+
+        /* ส่วนฝุ่น PM2.5 */
+        .pm-label { font-size: 0.9em; color: #888; text-align: left; }
+        .pm-value { font-size: 2.2em; font-weight: bold; color: #333; }
+        .pm-unit { font-size: 0.5em; color: #999; font-weight: normal; }
+        .pm-status { font-size: 0.9em; font-weight: 600; margin-top: 5px; }
+
+        /* สีสถานะฝุ่น */
+        .status-good { color: #00b894; }      /* ดีมาก */
+        .status-moderate { color: #fdcb6e; }  /* ปานกลาง */
+        .status-bad { color: #ff7675; }       /* แย่ */
+        .status-vbad { color: #d63031; }      /* อันตราย */
+
+        /* ปุ่ม Refresh */
+        .btn-refresh {
+            background: linear-gradient(45deg, #a18cd1, #fbc2eb);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 5px 20px rgba(161, 140, 209, 0.4);
+            font-family: 'Kanit', sans-serif;
+            font-weight: 500;
+        }
+        .btn-refresh:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="location-badge">📍 หมู่ 6 ต.อินทร์บุรี</div>
+        <h1>สภาพอากาศเรียลไทม์</h1>
+        <div class="timestamp" id="last-update">กำลังโหลด...</div>
+
+        <div class="data-box">
+            <div style="text-align: left;">
+                <div class="temp-big" id="temp">--°</div>
+                <div class="weather-desc" id="weather-desc">รอสักครู่...</div>
+                <div style="font-size: 0.8em; color:#aaa; margin-top:5px;">ความชื้น: <span id="humidity">--</span>%</div>
+            </div>
+            <div class="weather-icon" id="weather-icon"></div>
+        </div>
+
+        <div class="data-box" style="display: block; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="pm-label">ฝุ่น PM 2.5</span>
+                <span style="font-size: 1.5em;">😷</span>
+            </div>
+            <div class="pm-value" id="pm-val">-- <span class="pm-unit">μg/m³</span></div>
+            <div class="pm-status" id="pm-status">กำลังตรวจสอบ...</div>
+        </div>
+
+        <button class="btn-refresh" onclick="fetchData()">🔄 อัปเดตข้อมูลล่าสุด</button>
+    </div>
+
+    <script>
+        // --- 🔒 การตั้งค่า (Configuration) ---
+        const LAT = 15.012774175625303; 
+        const LON = 100.33129536605053;
+        const API_KEY = '8f195d69782e5f85fedd737fb5c1bbe5'; // Key ของคุณ
+
+        async function fetchData() {
+            const updateTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('last-update').innerText = `อัปเดตเมื่อ: ${updateTime} น.`;
+            
+            // 1. ดึงสภาพอากาศ (Current Weather)
+            try {
+                const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=th`);
+                const wData = await weatherRes.json();
+                
+                document.getElementById('temp').innerText = Math.round(wData.main.temp) + "°";
+                document.getElementById('weather-desc').innerText = wData.weather[0].description;
+                document.getElementById('humidity').innerText = wData.main.humidity;
+                
+                const iconCode = wData.weather[0].icon;
+                document.getElementById('weather-icon').innerHTML = `<img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="weather">`;
+            } catch (error) {
+                console.error("Weather Error:", error);
+            }
+
+            // 2. ดึงค่าฝุ่น PM2.5 (Air Pollution API)
+            try {
+                const airRes = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${LAT}&lon=${LON}&appid=${API_KEY}`);
+                const airData = await airRes.json();
+                
+                // OpenWeatherMap ให้ค่า pm2_5 เป็นหน่วย μg/m3 ตรงๆ
+                const pm25 = airData.list[0].components.pm2_5;
+                const pmElement = document.getElementById('pm-val');
+                const statusElement = document.getElementById('pm-status');
+
+                pmElement.innerHTML = `${pm25.toFixed(1)} <span class="pm-unit">μg/m³</span>`;
+
+                // เกณฑ์สีและคำแนะนำ (อ้างอิงมาตรฐานไทย)
+                statusElement.className = 'pm-status'; // Reset class
+                if (pm25 <= 25) {
+                    statusElement.innerText = "อากาศดีมาก 💚";
+                    statusElement.classList.add('status-good');
+                } else if (pm25 <= 37.5) {
+                    statusElement.innerText = "คุณภาพดี 💛";
+                    statusElement.classList.add('status-moderate');
+                } else if (pm25 <= 75) {
+                    statusElement.innerText = "เริ่มมีผลกระทบ 🧡";
+                    statusElement.classList.add('status-bad');
+                } else {
+                    statusElement.innerText = "อันตราย 🔴";
+                    statusElement.classList.add('status-vbad');
+                }
+
+            } catch (error) {
+                console.error("PM2.5 Error:", error);
+                document.getElementById('pm-status').innerText = "ไม่พบข้อมูลฝุ่น";
+            }
+        }
+
+        // เรียกทำงานทันทีเมื่อเปิดเว็บ
+        fetchData();
+    </script>
+</body>
+</html>
