@@ -227,21 +227,7 @@
             <div class="pm-status" id="pm-status">กำลังตรวจสอบ...</div>
         </div>
 
-        <!-- การ์ดข้อมูลระดับน้ำ -->
-        <div class="data-box" style="display: block; text-align: center;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span class="pm-label">ระดับน้ำแม่น้ำเจ้าพระยา</span>
-                <span style="font-size: 1.5em;">🌊</span>
-            </div>
-            <div style="font-size: 2.2em; font-weight: 900; color: #111827; margin-bottom: 6px;">
-                <span id="water-level">--</span> <span style="font-size: 0.4em; color:#6b7280; font-weight:700;">ม.รทก.</span>
-            </div>
-            <div style="font-size: 0.9em; color:#666; margin-bottom: 8px;">
-                <span>ระดับตลิ่ง: <span id="water-taling">--</span> ม.รทก.</span><br/>
-                <span>ต่ำกว่าตลิ่ง: <span id="water-diff">--</span> ม.</span>
-            </div>
-            <div class="pm-status" id="water-status">กำลังตรวจสอบ...</div>
-        </div>
+        <!-- การ์ดข้อมูลระดับน้ำถูกถอดออกตามคำขอของผู้ใช้ -->
 
         <button class="btn-refresh" onclick="fetchData()">🔄 อัปเดตข้อมูลล่าสุด</button>
     </div>
@@ -445,50 +431,7 @@
                 }
             }
 
-            // 3) ระดับน้ำแม่น้ำเจ้าพระยา (สถานีอินทร์บุรี)
-            try {
-                // 🔎 หมายเหตุ: ThaiWater ยังไม่เปิดเผย API สาธารณะสำหรับอ่านข้อมูลระดับน้ำ
-                // ในเวอร์ชันนี้จึงใช้ค่าตัวอย่างจากการตรวจวัดล่าสุดของสถานีอินทร์บุรี
-                // ในอนาคตสามารถแก้ไข URL ด้านล่างให้เรียก API ที่เหมาะสมได้ (เช่น ThaiWater หรือ RID) แล้วทำการแปลงข้อมูล
-
-                // ตัวอย่างค่าคงที่: 14 กุมภาพันธ์ 2569 เวลา 12:50 น.
-                const waterLevel = 4.88;      // ระดับน้ำ ณ จุดวัด (หน่วย: ม.รทก.)
-                const waterTaling = 13.00;    // ระดับตลิ่ง (ม.รทก.) (ผู้ใช้ปรับเป็น 13 เมตร)
-                // คำนวณระยะห่างจากตลิ่ง: ระดับตลิ่งลบระดับน้ำ
-                const waterDiff = parseFloat((waterTaling - waterLevel).toFixed(2));
-
-                // อัปเดตค่าใน UI
-                document.getElementById('water-level').innerText = waterLevel.toFixed(2);
-                document.getElementById('water-taling').innerText = waterTaling.toFixed(2);
-                document.getElementById('water-diff').innerText = waterDiff.toFixed(2);
-
-                // กำหนดสถานะตามระยะห่างจากตลิ่ง (หน่วย: เมตร)
-                const waterStatusEl = document.getElementById('water-status');
-                waterStatusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
-                let statusText = '';
-                if (waterDiff >= 10) {
-                    statusText = 'น้ำน้อย';
-                    waterStatusEl.classList.add('status-good');
-                } else if (waterDiff >= 3) {
-                    statusText = 'ปกติ';
-                    waterStatusEl.classList.add('status-moderate');
-                } else if (waterDiff >= 0) {
-                    statusText = 'สูง';
-                    waterStatusEl.classList.add('status-bad');
-                } else {
-                    statusText = 'ล้นตลิ่ง';
-                    waterStatusEl.classList.add('status-vbad');
-                }
-                waterStatusEl.innerText = statusText;
-            } catch (error) {
-                console.error('Water Level Error:', error);
-                document.getElementById('water-level').innerText = '--';
-                document.getElementById('water-taling').innerText = '--';
-                document.getElementById('water-diff').innerText = '--';
-                const waterStatusEl = document.getElementById('water-status');
-                waterStatusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
-                waterStatusEl.innerText = 'ไม่พบข้อมูลน้ำ';
-            }
+            // 3) ระดับน้ำถูกถอดออกจากระบบตามคำขอของผู้ใช้ จึงไม่ต้องดึงข้อมูลน้ำ
         }
 
         // เรียกทำงานทันทีเมื่อเปิดเว็บ
