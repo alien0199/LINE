@@ -116,6 +116,41 @@
             letter-spacing: 0.01em;
         }
 
+        /* ส่วนระดับน้ำ */
+        .water-value {
+            display: inline-flex;
+            align-items: baseline;
+            justify-content: center;
+            font-size: clamp(2.6rem, 8vw, 4rem);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: #0a4e78;
+            padding: 10px 14px;
+            border-radius: 18px;
+            background: rgba(10, 78, 120, 0.05);
+            box-shadow: 0 8px 20px rgba(10, 78, 120, 0.12);
+            font-variant-numeric: tabular-nums;
+        }
+        .water-unit {
+            font-size: 0.38em;
+            color: #6b7280;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .water-status {
+            font-size: 1.05em;
+            font-weight: 750;
+            margin-top: 12px;
+            letter-spacing: 0.01em;
+        }
+        /* สีสถานะน้ำ */
+        .water-low-critical { color: #d32f2f; } /* น้ำน้อยวิกฤติ */
+        .water-low { color: #ff9800; }        /* น้ำน้อย */
+        .water-normal { color: #00b894; }     /* น้ำปกติ */
+        .water-high { color: #2196f3; }       /* น้ำมาก */
+        .water-flood { color: #9c27b0; }      /* น้ำล้นตลิ่ง */
+
         /* สีสถานะฝุ่น */
         .status-good { color: #00b894; }      /* ดีมาก */
         .status-moderate { color: #fdcb6e; }  /* ปานกลาง */
@@ -227,7 +262,17 @@
             <div class="pm-status" id="pm-status">กำลังตรวจสอบ...</div>
         </div>
 
-        <!-- การ์ดข้อมูลระดับน้ำถูกถอดออกตามคำขอของผู้ใช้ -->
+        <!-- การ์ดข้อมูลระดับน้ำแม่น้ำเจ้าพระยา: แสดงระดับน้ำ สถานะ และส่วนต่างจากตลิ่ง -->
+        <div class="data-box" id="water-box" style="display: block; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span class="pm-label">ระดับน้ำเจ้าพระยา</span>
+                <span style="font-size: 1.5em;">🌊</span>
+            </div>
+            <div class="water-value" id="water-val">-- <span class="water-unit">ม.</span></div>
+            <div class="water-status" id="water-status">กำลังตรวจสอบ...</div>
+            <div class="water-diff" id="water-diff" style="font-size: 0.9em; color:#555; margin-top: 8px;">--</div>
+            <div class="water-time" id="water-time" style="font-size: 0.8em; color:#888; margin-top: 6px;">--</div>
+        </div>
 
         <button class="btn-refresh" onclick="fetchData()">🔄 อัปเดตข้อมูลล่าสุด</button>
     </div>
@@ -345,6 +390,125 @@
             99: "พายุฝนฟ้าคะนอง (ลูกเห็บหนัก)"
         };
 
+        // --- 💧 การตั้งค่าสำหรับระดับน้ำ ---
+        // กำหนดระดับตลิ่งอ้างอิง (ม.) ตามที่ผู้ใช้กำหนด
+        const WATER_BANK_LEVEL = 13;
+
+        /**
+         * คำนวณสถานะน้ำตามสัดส่วนของระดับน้ำต่อระดับตลิ่ง
+         * อิงเกณฑ์จาก Thaiwater: <=10% น้ำน้อยวิกฤติ, >10-30% น้ำน้อย, >30-70% น้ำปกติ, >70-100% น้ำมาก, >100% น้ำล้นตลิ่ง
+         * คืนค่าออบเจ็กต์ { label: 'น้ำปกติ', className: 'water-normal' }
+         */
+        function getWaterStatus(ratio) {
+            if (!isFinite(ratio)) {
+                return { label: 'ไม่พบข้อมูล', className: '' };
+            }
+            if (ratio <= 10) {
+                return { label: 'น้ำน้อยวิกฤติ', className: 'water-low-critical' };
+            } else if (ratio <= 30) {
+                return { label: 'น้ำน้อย', className: 'water-low' };
+            } else if (ratio <= 70) {
+                return { label: 'น้ำปกติ', className: 'water-normal' };
+            } else if (ratio <= 100) {
+                return { label: 'น้ำมาก', className: 'water-high' };
+            } else {
+                return { label: 'น้ำล้นตลิ่ง', className: 'water-flood' };
+            }
+        }
+
+        /**
+         * อัปเดต UI ส่วนระดับน้ำ
+         * @param {number|null} level ระดับน้ำปัจจุบัน (ม.)
+         * @param {string|null} timeStr เวลาอัปเดต (HH:MM)
+         */
+        function updateWaterUI(level, timeStr) {
+            const valEl = document.getElementById('water-val');
+            const statusEl = document.getElementById('water-status');
+            const diffEl = document.getElementById('water-diff');
+            const timeEl = document.getElementById('water-time');
+            if (!valEl || !statusEl || !diffEl || !timeEl) return;
+
+            if (typeof level === 'number' && !Number.isNaN(level)) {
+                // แสดงค่า
+                valEl.innerHTML = `${level.toFixed(2)} <span class="water-unit">ม.</span>`;
+                // คำนวณสัดส่วนและส่วนต่าง
+                const ratio = (level / WATER_BANK_LEVEL) * 100;
+                const diff = WATER_BANK_LEVEL - level;
+                const { label, className } = getWaterStatus(ratio);
+                statusEl.className = 'water-status ' + className;
+                statusEl.innerText = label;
+                // ข้อความส่วนต่าง
+                if (diff >= 0) {
+                    diffEl.innerText = `ต่ำกว่าตลิ่ง ${diff.toFixed(2)} ม.`;
+                } else {
+                    diffEl.innerText = `สูงกว่าตลิ่ง ${Math.abs(diff).toFixed(2)} ม.`;
+                }
+                // เวลา
+                timeEl.innerText = timeStr ? `อัปเดต ${timeStr} น.` : '';
+            } else {
+                valEl.innerHTML = `-- <span class="water-unit">ม.</span>`;
+                statusEl.className = 'water-status';
+                statusEl.innerText = 'ไม่พบข้อมูลน้ำ';
+                diffEl.innerText = '';
+                timeEl.innerText = '';
+            }
+        }
+
+        /**
+         * ดึงข้อมูลระดับน้ำจาก Thaiwater (wl warning JSON) และกรองสถานีอินทร์บุรี จ.สิงห์บุรี
+         */
+        async function fetchWaterLevel() {
+            const urls = [
+                'https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning',
+                'https://corsproxy.io/?https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning',
+                'https://api.allorigins.win/raw?url=https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning'
+            ];
+            let data = null;
+            for (const url of urls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) continue;
+                    const json = await res.json().catch(() => null);
+                    if (Array.isArray(json)) {
+                        data = json;
+                        break;
+                    }
+                } catch (err) {
+                    // ignore and try next
+                }
+            }
+            if (!Array.isArray(data)) {
+                updateWaterUI(null, null);
+                return;
+            }
+            // หา station อินทร์บุรี จังหวัดสิงห์บุรี
+            const station = data.find(item => {
+                try {
+                    // ตัวอักษรไทยอาจเข้ารหัส unicode: ใช้ includes เพื่อค้นหาผ่านชื่อและอำเภอ/จังหวัด
+                    return (
+                        (item.name && item.name.includes('อินทร์บุรี')) ||
+                        (item.amphoe_name && item.amphoe_name.includes('อินทร์บุรี'))
+                    ) && (item.province_name && item.province_name.includes('สิงห์บุรี'));
+                } catch (e) {
+                    return false;
+                }
+            });
+            if (!station) {
+                updateWaterUI(null, null);
+                return;
+            }
+            // ระดับน้ำ
+            let level = parseFloat(station.wl_present);
+            if (Number.isNaN(level)) level = null;
+            // เวลา: ใช้ HH:MM จาก station.time (format HH:MM:SS)
+            let timeStr = '';
+            if (station.time) {
+                const hhmm = station.time.substring(0,5);
+                timeStr = hhmm;
+            }
+            updateWaterUI(level, timeStr);
+        }
+
         async function fetchJson(url, timeoutMs = 12000) {
             const controller = new AbortController();
             const t = setTimeout(() => controller.abort(), timeoutMs);
@@ -431,7 +595,13 @@
                 }
             }
 
-            // 3) ระดับน้ำถูกถอดออกจากระบบตามคำขอของผู้ใช้ จึงไม่ต้องดึงข้อมูลน้ำ
+            // 3) ระดับน้ำ (ดึงข้อมูลจาก Thaiwater ผ่าน JSON และแสดงผล)
+            try {
+                await fetchWaterLevel();
+            } catch (err) {
+                console.error('Water Error:', err);
+                updateWaterUI(null, null);
+            }
         }
 
         // เรียกทำงานทันทีเมื่อเปิดเว็บ
