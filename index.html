@@ -9,7 +9,7 @@
         /* --- CSS Design: Pastel & Modern UI --- */
         body {
             font-family: 'Kanit', sans-serif;
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); /* พื้นหลังคลีนๆ */
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -19,31 +19,30 @@
             color: #4a4a4a;
         }
 
-        /* พื้นหลังพาสเทลแบบในรูป */
         .bg-gradient {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 10% 20%, rgb(255, 222, 225) 0%, requests 90%);
+            background: radial-gradient(circle at 10% 20%, rgb(255, 222, 225) 0%, rgb(214, 252, 255) 90%);
             z-index: -1;
             opacity: 0.7;
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 40px;
             padding: 30px 25px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.8);
+            border: 2px solid #fff;
         }
 
         /* Location Badge */
         .badge-loc {
-            background: #FF8BA7;
+            background: #ff9a9e;
             color: white;
             padding: 8px 20px;
             border-radius: 30px;
@@ -51,8 +50,9 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            box-shadow: 0 4px 10px rgba(255, 139, 167, 0.4);
+            box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4);
             margin-bottom: 15px;
+            font-weight: 500;
         }
 
         h1 { margin: 5px 0; font-size: 1.6rem; font-weight: 600; color: #555; }
@@ -73,7 +73,7 @@
             font-size: 0.9rem;
         }
         .btn-gps { background: #4ADE80; color: white; box-shadow: 0 4px 10px rgba(74, 222, 128, 0.4); }
-        .btn-reset { background: #E2E8F0; color: #64748B; }
+        .btn-reset { background: #f1f5f9; color: #64748B; }
         .btn:active { transform: scale(0.95); }
 
         /* Weather Box (กล่องฟ้าใหญ่) */
@@ -89,11 +89,14 @@
             font-size: 5rem;
             font-weight: 800;
             line-height: 1;
-            color: #3B82F6; /* สีฟ้าสด */
+            color: #3B82F6;
             text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
-        .degree { font-size: 2.5rem; vertical-align: top; }
-        .weather-status { font-size: 1.2rem; font-weight: 600; color: #475569; margin-top: 5px; }
+        .degree { font-size: 2.5rem; margin-top: 10px; color: #60a5fa; }
+        .weather-status { font-size: 1.2rem; font-weight: 600; color: #475569; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px;}
         .humidity { font-size: 0.85rem; color: #94A3B8; margin-top: 5px; }
 
         /* Info Cards (PM2.5 & Water) */
@@ -107,20 +110,24 @@
             position: relative;
         }
         .card-label { font-size: 0.9rem; color: #94A3B8; font-weight: 500; display: flex; justify-content: space-between;}
-        .card-value { font-size: 2.2rem; font-weight: 800; color: #334155; margin-top: 5px; display: flex; align-items: baseline; gap: 5px; }
-        .card-unit { font-size: 0.9rem; color: #94A3B8; font-weight: 500; }
-        .card-sub { font-size: 0.8rem; color: #64748B; margin-top: 5px; background: #F1F5F9; padding: 4px 10px; border-radius: 10px; display: inline-block;}
+        .card-value { font-size: 2.5rem; font-weight: 800; color: #334155; margin-top: 5px; display: flex; align-items: baseline; gap: 5px; line-height: 1.1;}
+        .card-unit { font-size: 0.4em; color: #94A3B8; font-weight: 600; }
+        .card-sub { font-size: 0.85rem; color: #64748B; margin-top: 8px; background: #F1F5F9; padding: 6px 12px; border-radius: 12px; display: inline-block;}
 
         /* Status Colors */
-        .st-good { color: #22c55e; }
-        .st-warn { color: #f59e0b; }
-        .st-danger { color: #ef4444; }
+        .st-good { color: #10b981; background: #d1fae5; }
+        .st-warn { color: #f59e0b; background: #fef3c7; }
+        .st-danger { color: #ef4444; background: #fee2e2; }
+        
+        /* Water Specific */
+        .water-safe { color: #10b981; }
+        .water-high { color: #ef4444; }
 
-        /* Loading Animation */
+        /* Animation */
         .loading { animation: pulse 1.5s infinite; opacity: 0.6; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-        .hidden { display: none; }
+        
+        .error-msg { font-size: 0.7em; color: #ef4444; margin-top:5px; }
     </style>
 </head>
 <body>
@@ -131,38 +138,38 @@
         <div class="badge-loc" id="location-badge">📍 อินทร์บุรี (เริ่มต้น)</div>
         
         <h1>สภาพอากาศเรียลไทม์</h1>
-        <div class="sub-text" id="last-update">กำลังเชื่อมต่อดาวเทียม...</div>
+        <div class="sub-text" id="last-update">กำลังเชื่อมต่อ...</div>
 
         <div class="btn-group">
             <button class="btn btn-gps" onclick="getLocation()">🛰️ ใช้ GPS</button>
-            <button class="btn btn-reset" onclick="resetLocation()">🔄 รีเซ็ตพิกัด</button>
+            <button class="btn btn-reset" onclick="resetLocation()">🔄 รีเซ็ต</button>
         </div>
 
         <div class="weather-box">
             <div id="temp-val" class="temp-huge loading">--<span class="degree">°</span></div>
-            <div id="weather-txt" class="weather-status">กำลังโหลด...</div>
+            <div id="weather-txt" class="weather-status"><span>โหลดข้อมูล...</span></div>
             <div id="humid-val" class="humidity">ความชื้น: --%</div>
         </div>
 
         <div class="info-card">
             <div class="card-label">ฝุ่น PM 2.5 <span id="pm-emoji">😷</span></div>
-            <div class="card-value" id="pm-val"><span class="loading">--</span> <span class="card-unit">μg/m³</span></div>
-            <div class="card-sub" id="pm-desc">รอข้อมูล...</div>
+            <div class="card-value" id="pm-val"><span class="loading" style="font-size:0.6em;">Checking...</span></div>
+            <div class="card-sub" id="pm-desc" style="background:none;">รอสักครู่...</div>
         </div>
 
         <div class="info-card">
             <div class="card-label">
                 <span>🌊 ระดับน้ำ (อินทร์บุรี)</span>
-                <span style="font-size:0.7em; color:#FF8BA7;">ตลิ่ง 15.10 ม.</span>
+                <span style="font-size:0.75em; color:#FF8BA7; background:#fff0f3; padding:2px 8px; border-radius:10px;">ตลิ่ง 15.10 ม.</span>
             </div>
-            <div class="card-value" id="water-val"><span class="loading">--</span> <span class="card-unit">ม.</span></div>
-            <div class="card-sub" id="water-desc">กำลังดึงข้อมูลกรมชลฯ...</div>
+            <div class="card-value" id="water-val"><span class="loading" style="font-size:0.6em;">Connecting...</span></div>
+            <div class="card-sub" id="water-desc" style="background:none;">กำลังเจาะระบบกรมชลฯ...</div>
         </div>
 
         <div class="info-card" style="background: #F0FDFA;">
             <div class="card-label">💧 เขื่อนเจ้าพระยา (C.13)</div>
-            <div class="card-value" id="dam-val" style="color: #0891b2;"><span class="loading">--</span> <span class="card-unit">ลบ.ม./วิ</span></div>
-            <div class="card-sub" id="dam-desc">การระบายน้ำปัจจุบัน</div>
+            <div class="card-value" id="dam-val" style="color: #0891b2;"><span class="loading" style="font-size:0.6em;">...</span></div>
+            <div class="card-sub" id="dam-desc" style="background:none;">การระบายน้ำ</div>
         </div>
 
     </div>
@@ -171,160 +178,216 @@
         // --- Configuration ---
         const DEFAULT_LAT = 15.0121; // อินทร์บุรี
         const DEFAULT_LON = 100.3312;
-        const BANK_LEVEL = 15.10; // ระดับตลิ่งอินทร์บุรีตามรูปที่ส่งมา
+        const BANK_LEVEL = 15.10; // ระดับตลิ่งอินทร์บุรี
         
-        // ตัวแปรเก็บพิกัด
         let lat = DEFAULT_LAT;
         let lon = DEFAULT_LON;
 
-        // --- Weather Codes (แปลไทย) ---
+        // --- Weather Codes ---
         const weatherCodes = {
-            0: "ท้องฟ้าโปร่ง ☀️", 1: "มีเมฆเล็กน้อย 🌤️", 2: "มีเมฆบางส่วน ⛅", 3: "เมฆมาก ☁️",
-            45: "มีหมอก 🌫️", 48: "หมอกจัด 🌫️", 51: "ฝนปรอยๆ 🌧️", 53: "ฝนตกปานกลาง 🌧️", 
-            55: "ฝนตกหนัก 🌧️", 61: "ฝนตกเบา 🌧️", 63: "ฝนตกปานกลาง 🌧️", 65: "ฝนตกหนักมาก ⛈️",
-            80: "ฝนตกเป็นระลอก 🌦️", 95: "พายุฝนฟ้าคะนอง ⚡", 96: "พายุฝนรุนแรง ⛈️"
+            0: "ท้องฟ้าแจ่มใส ☀️", 1: "เมฆเล็กน้อย 🌤️", 2: "เมฆบางส่วน ⛅", 3: "เมฆมาก ☁️",
+            45: "มีหมอก 🌫️", 51: "ฝนปรอยๆ 🌧️", 53: "ฝนตกปานกลาง 🌧️", 
+            55: "ฝนตกหนัก 🌧️", 61: "ฝนตกเบา 🌧️", 63: "ฝนตกปานกลาง 🌧️", 
+            65: "ฝนตกหนักมาก ⛈️", 80: "ฝนตกปรอยๆ 🌦️", 95: "พายุฝนฟ้าคะนอง ⚡"
         };
 
-        // --- Init ---
         window.onload = function() {
-            // เช็คว่าเคย save พิกัดไว้ไหม
             if(localStorage.getItem('userLat')) {
                 lat = localStorage.getItem('userLat');
                 lon = localStorage.getItem('userLon');
-                document.getElementById('location-badge').innerText = "📍 ตำแหน่งของคุณ";
+                document.getElementById('location-badge').innerText = "📍 พิกัดของคุณ";
             }
             fetchAllData();
         };
 
-        // --- Functions ---
-
         async function fetchAllData() {
             const timeStr = new Date().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('last-update').innerText = `อัปเดตล่าสุด: ${timeStr} น.`;
+            document.getElementById('last-update').innerText = `อัปเดต: ${timeStr} น.`;
             
-            // เรียกทำงานพร้อมกัน
-            fetchWeather();
-            fetchThaiWater(); 
+            fetchWeatherAndPM();
+            fetchWaterDataWithRetry(); // เรียกฟังก์ชันใหม่ที่มีระบบ Retry
         }
 
-        // 1. ดึงอากาศ & PM2.5 (OpenMeteo) - อันนี้ดึงตรงได้เลย ไม่มี CORS
-        async function fetchWeather() {
+        // 1. ดึงอากาศ & PM2.5 (ฉบับแก้บั๊ก null)
+        async function fetchWeatherAndPM() {
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&hourly=pm2_5&timezone=Asia%2FBangkok&forecast_days=1`;
-                const res = await fetch(url);
-                const data = await res.json();
+                // ใช้ API แยก 2 ตัวเพื่อความชัวร์
+                // 1.1 อากาศทั่วไป
+                const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok`);
+                const wData = await wRes.json();
+                
+                if (wData.current) {
+                    const temp = Math.round(wData.current.temperature_2m);
+                    document.getElementById('temp-val').innerHTML = `${temp}<span class="degree">°</span>`;
+                    document.getElementById('temp-val').classList.remove('loading');
+                    
+                    const code = wData.current.weather_code;
+                    document.getElementById('weather-txt').innerHTML = weatherCodes[code] || "ไม่มีข้อมูล";
+                    document.getElementById('humid-val').innerText = `ความชื้น: ${wData.current.relative_humidity_2m}%`;
+                }
 
-                // อุณหภูมิ
-                const temp = Math.round(data.current.temperature_2m);
-                document.getElementById('temp-val').innerHTML = `${temp}<span class="degree">°</span>`;
-                document.getElementById('temp-val').classList.remove('loading');
+                // 1.2 PM2.5 (ใช้ Air Quality API โดยตรง ไม่ใช้ hourly แล้ว)
+                const aRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5&timezone=Asia%2FBangkok`);
+                const aData = await aRes.json();
                 
-                // คำอธิบาย
-                const code = data.current.weather_code;
-                document.getElementById('weather-txt').innerText = weatherCodes[code] || "ไม่มีข้อมูล";
-                document.getElementById('humid-val').innerText = `ความชื้น: ${data.current.relative_humidity_2m}%`;
-
-                // PM 2.5 (เอาค่าชั่วโมงปัจจุบัน)
-                const hourIndex = new Date().getHours();
-                const pm25 = data.hourly.pm2_5[hourIndex];
-                const pmEl = document.getElementById('pm-val');
-                pmEl.innerHTML = `${pm25} <span class="card-unit">μg/m³</span>`;
-                
-                const pmDesc = document.getElementById('pm-desc');
-                const pmEmoji = document.getElementById('pm-emoji');
-                
-                if(pm25 <= 25) { pmDesc.innerText = "อากาศดีมาก 🍃"; pmDesc.className = "card-sub st-good"; pmEmoji.innerText = "😊"; }
-                else if(pm25 <= 50) { pmDesc.innerText = "ปานกลาง"; pmDesc.className = "card-sub st-warn"; pmEmoji.innerText = "😐"; }
-                else { pmDesc.innerText = "เริ่มมีผลกระทบ"; pmDesc.className = "card-sub st-danger"; pmEmoji.innerText = "😷"; }
+                if (aData.current && aData.current.pm2_5 != null) {
+                    const pm25 = Math.round(aData.current.pm2_5);
+                    document.getElementById('pm-val').innerHTML = `${pm25} <span class="card-unit">μg/m³</span>`;
+                    
+                    const pmDesc = document.getElementById('pm-desc');
+                    const pmEmoji = document.getElementById('pm-emoji');
+                    
+                    pmDesc.className = "card-sub"; // Reset class
+                    if(pm25 <= 25) { 
+                        pmDesc.innerText = "อากาศดีมาก 🍃"; 
+                        pmDesc.classList.add('st-good');
+                        pmEmoji.innerText = "😊"; 
+                    } else if(pm25 <= 50) { 
+                        pmDesc.innerText = "ปานกลาง"; 
+                        pmDesc.classList.add('st-warn');
+                        pmEmoji.innerText = "😐"; 
+                    } else { 
+                        pmDesc.innerText = "เริ่มมีผลกระทบ"; 
+                        pmDesc.classList.add('st-danger');
+                        pmEmoji.innerText = "😷"; 
+                    }
+                } else {
+                    document.getElementById('pm-val').innerText = "N/A";
+                }
 
             } catch (e) {
-                console.error("Weather Error", e);
-                document.getElementById('weather-txt').innerText = "โหลดไม่ได้";
+                console.error("Weather/PM Error", e);
+                document.getElementById('temp-val').innerText = "--";
             }
         }
 
-        // 2. ดึงระดับน้ำ (ThaiWater) - **ต้องใช้ Proxy**
-        async function fetchThaiWater() {
-            // ใช้ corsproxy.io เพื่อหลอก Server ว่าเราไม่ใช่ Browser ธรรมดา
-            const PROXY = "https://corsproxy.io/?"; 
-            // หรือถ้าอันบนพัง ให้ลอง: "https://api.allorigins.win/raw?url="
-            
+        // 2. ระบบดึงน้ำแบบมี "ก๊อกสำรอง" (Proxy Rotation)
+        async function fetchWaterDataWithRetry() {
+            // รายชื่อ Proxy ที่จะลองใช้ตามลำดับ
+            const proxies = [
+                (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, // ก๊อก 1 (เสถียรสุด)
+                (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,             // ก๊อก 2
+                (url) => `https://thingproxy.freeboard.io/fetch/${url}`                  // ก๊อก 3
+            ];
+
             const urlInburi = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=17"; // สิงห์บุรี
             const urlDam = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=18"; // ชัยนาท
 
-            // A. ดึงระดับน้ำอินทร์บุรี
-            try {
-                const res = await fetch(PROXY + encodeURIComponent(urlInburi));
-                const json = await res.json();
-                
-                // ค้นหาสถานีที่มีคำว่า "อินทร์บุรี"
-                const station = json.data.find(d => 
-                    d.station.tele_station_name.th.includes("อินทร์บุรี") || 
-                    d.geocode.tumbon_name.th.includes("อินทร์บุรี")
-                );
+            let inburiSuccess = false;
+            let damSuccess = false;
 
-                if (station) {
-                    const wl = parseFloat(station.waterlevel_msl);
-                    document.getElementById('water-val').innerHTML = `${wl.toFixed(2)} <span class="card-unit">ม.</span>`;
-                    
-                    const diff = BANK_LEVEL - wl;
-                    const descEl = document.getElementById('water-desc');
-                    
-                    if(diff > 0) {
-                        descEl.innerHTML = `ต่ำกว่าตลิ่ง <span class="st-good">${diff.toFixed(2)} ม.</span> ✅`;
-                    } else {
-                        descEl.innerHTML = `⚠️ สูงกว่าตลิ่ง <span class="st-danger">${Math.abs(diff).toFixed(2)} ม.</span>`;
+            // วนลูปลอง Proxy ทีละตัว
+            for (let i = 0; i < proxies.length; i++) {
+                const makeUrl = proxies[i];
+                console.log(`Trying Proxy #${i+1}...`);
+
+                // A. ลองดึง อินทร์บุรี
+                if (!inburiSuccess) {
+                    try {
+                        const res = await fetch(makeUrl(urlInburi));
+                        if (!res.ok) throw new Error("Network response was not ok");
+                        const json = await res.json();
+                        
+                        // กรองข้อมูล (ถ้าผ่าน Proxy บางตัว Data อาจซ้อนกัน)
+                        const data = json.data || json.contents && JSON.parse(json.contents).data || json; 
+
+                        if (Array.isArray(data)) {
+                            const station = data.find(d => 
+                                (d.station.tele_station_name.th && d.station.tele_station_name.th.includes("อินทร์บุรี")) || 
+                                (d.geocode.tumbon_name.th && d.geocode.tumbon_name.th.includes("อินทร์บุรี"))
+                            );
+
+                            if (station) {
+                                const wl = parseFloat(station.waterlevel_msl);
+                                const diff = BANK_LEVEL - wl;
+                                
+                                document.getElementById('water-val').innerHTML = `${wl.toFixed(2)} <span class="card-unit">ม.</span>`;
+                                const wDesc = document.getElementById('water-desc');
+                                wDesc.className = "card-sub";
+                                
+                                if(diff > 0) {
+                                    wDesc.innerHTML = `ต่ำกว่าตลิ่ง ${diff.toFixed(2)} ม. ✅`;
+                                    wDesc.classList.add('st-good');
+                                } else {
+                                    wDesc.innerHTML = `⚠️ สูงกว่าตลิ่ง ${Math.abs(diff).toFixed(2)} ม.`;
+                                    wDesc.classList.add('st-danger');
+                                }
+                                inburiSuccess = true; // สำเร็จ! หยุดลอง Proxy สำหรับอินทร์บุรี
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Proxy #${i+1} failed for Inburi:`, e);
                     }
-                } else {
-                    document.getElementById('water-desc').innerText = "ไม่พบข้อมูลสถานี";
                 }
-            } catch (e) {
-                console.error("Water Error", e);
-                document.getElementById('water-val').innerText = "err";
+
+                // B. ลองดึง เขื่อนเจ้าพระยา
+                if (!damSuccess) {
+                    try {
+                        const res = await fetch(makeUrl(urlDam));
+                        if (!res.ok) throw new Error("Network err");
+                        const json = await res.json();
+                        const data = json.data || json.contents && JSON.parse(json.contents).data || json;
+
+                        if (Array.isArray(data)) {
+                            const dam = data.find(d => d.station.tele_station_oldcode === "C.13");
+                            if (dam) {
+                                const discharge = parseFloat(dam.discharge);
+                                document.getElementById('dam-val').innerHTML = `${discharge.toLocaleString()} <span class="card-unit">ลบ.ม./วิ</span>`;
+                                
+                                const dDesc = document.getElementById('dam-desc');
+                                dDesc.className = "card-sub";
+                                if(discharge > 2000) { 
+                                    dDesc.innerText = "ระบายน้ำสูง (ธงแดง)"; 
+                                    dDesc.classList.add('st-danger');
+                                } else if(discharge > 800) { 
+                                    dDesc.innerText = "เฝ้าระวัง"; 
+                                    dDesc.classList.add('st-warn');
+                                } else { 
+                                    dDesc.innerText = "สถานการณ์ปกติ"; 
+                                    dDesc.classList.add('st-good');
+                                }
+                                damSuccess = true;
+                            }
+                        }
+                    } catch (e) {
+                         console.warn(`Proxy #${i+1} failed for Dam:`, e);
+                    }
+                }
+
+                // ถ้าได้ครบทั้ง 2 ค่าแล้ว ก็ออกจากลูปเลย ไม่ต้องลอง Proxy อื่นต่อ
+                if (inburiSuccess && damSuccess) break;
             }
 
-            // B. ดึงเขื่อนเจ้าพระยา (C.13)
-            try {
-                const res = await fetch(PROXY + encodeURIComponent(urlDam));
-                const json = await res.json();
-                
-                // หา C.13
-                const dam = json.data.find(d => d.station.tele_station_oldcode === "C.13");
-                
-                if (dam) {
-                    const discharge = parseFloat(dam.discharge);
-                    document.getElementById('dam-val').innerHTML = `${discharge.toLocaleString()} <span class="card-unit">ลบ.ม./วิ</span>`;
-                    
-                    const damDesc = document.getElementById('dam-desc');
-                    if(discharge > 2000) { damDesc.innerText = "⚠️ ระบายน้ำสูง (ธงแดง)"; damDesc.style.color = "red"; }
-                    else if(discharge > 1000) { damDesc.innerText = "เฝ้าระวัง (ธงเหลือง)"; damDesc.style.color = "orange"; }
-                    else { damDesc.innerText = "สถานการณ์ปกติ"; damDesc.style.color = "green"; }
-                }
-            } catch (e) {
-                console.error("Dam Error", e);
+            // ถ้าวนจนครบทุก Proxy แล้วยังไม่ได้ข้อมูล
+            if (!inburiSuccess) {
+                document.getElementById('water-val').innerText = "N/A";
+                document.getElementById('water-desc').innerText = "เชื่อมต่อกรมชลฯ ไม่ได้";
+                document.getElementById('water-desc').classList.add('st-danger');
+            }
+            if (!damSuccess) {
+                 document.getElementById('dam-val').innerText = "N/A";
             }
         }
 
-        // --- GPS Logic ---
         function getLocation() {
             if (navigator.geolocation) {
-                document.getElementById('last-update').innerText = "กำลังค้นหาพิกัด...";
+                document.getElementById('last-update').innerText = "ค้นหาพิกัด GPS...";
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         lat = position.coords.latitude;
                         lon = position.coords.longitude;
                         localStorage.setItem('userLat', lat);
                         localStorage.setItem('userLon', lon);
-                        document.getElementById('location-badge').innerText = "📍 ตำแหน่งของคุณ (GPS)";
+                        document.getElementById('location-badge').innerText = "📍 GPS ของคุณ";
                         fetchAllData();
                     },
                     (error) => {
-                        alert("ไม่สามารถระบุพิกัดได้ กรุณาเปิด Location Service");
-                        document.getElementById('last-update').innerText = "GPS Error";
+                        alert("เปิด GPS ไม่สำเร็จ หรือ Browser ไม่รองรับ");
+                        fetchAllData();
                     }
                 );
             } else {
-                alert("Browser นี้ไม่รองรับ GPS");
+                alert("Browser ไม่รองรับ GPS");
             }
         }
 
