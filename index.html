@@ -264,7 +264,6 @@
 
         let LAT = DEFAULT_LAT;
         let LON = DEFAULT_LON;
-        const PROXY_URL = 'https://corsproxy.io/?'; 
 
         // --- Weather Codes ---
         const WEATHER_CODE_TH = {
@@ -302,14 +301,36 @@
             }, () => alert('เปิด GPS ไม่สำเร็จ'), {timeout:10000});
         }
 
-        // --- Fetch Helper ---
-        async function fetchJson(url) {
-            try {
-                // ใช้ Proxy เพื่อทะลุ CORS
-                const res = await fetch(PROXY_URL + encodeURIComponent(url));
-                if (!res.ok) throw new Error('Network Err');
-                return await res.json();
-            } catch (e) { console.error(e); return null; }
+        // --- Fetch Helper (ปรับปรุงใหม่ แยกการใช้ Proxy) ---
+        async function fetchJson(url, useProxy = false) {
+            // 1. ถ้าไม่บังคับใช้ Proxy ให้ดึงตรงๆ เลย (สำหรับ OpenMeteo)
+            if (!useProxy) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error('Direct Fetch Error');
+                    return await res.json();
+                } catch (e) {
+                    console.warn("Direct fetch failed, trying fallback...", e);
+                    // ถ้าดึงตรงๆ พลาด ให้ลองใช้ Proxy สำรอง (เผื่อไว้)
+                }
+            }
+
+            // 2. ถ้าต้องใช้ Proxy (สำหรับ ThaiWater) หรือดึงตรงพลาด ให้ลองวนใช้ Proxy หลายเจ้า
+            const proxies = [
+                (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+            ];
+
+            for (const makeProxy of proxies) {
+                try {
+                    const pUrl = makeProxy(url);
+                    const res = await fetch(pUrl);
+                    if (res.ok) return await res.json();
+                } catch (e) {
+                    console.error("Proxy failed:", e);
+                }
+            }
+            return null; // ยอมแพ้
         }
 
         // --- Core Logic ---
@@ -317,17 +338,20 @@
             const now = new Date();
             document.getElementById('last-update').innerText = `อัปเดต: ${now.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})} น.`;
 
-            // 1. Weather (OpenMeteo)
-            const wData = await fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok`);
+            // 1. Weather (OpenMeteo) -> ดึงตรง (useProxy = false)
+            const wData = await fetchJson(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok`, false);
             if (wData && wData.current) {
                 document.getElementById('temp').innerText = Math.round(wData.current.temperature_2m) + "°";
                 document.getElementById('humidity').innerText = Math.round(wData.current.relative_humidity_2m) + "%";
                 const code = wData.current.weather_code;
                 document.getElementById('weather-desc').innerText = WEATHER_CODE_TH[code] || "ไม่มีข้อมูล";
+            } else {
+                document.getElementById('temp').innerText = "--";
+                document.getElementById('weather-desc').innerText = "โหลดไม่ได้";
             }
 
-            // 2. Air Quality (OpenMeteo)
-            const aData = await fetchJson(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`);
+            // 2. Air Quality (OpenMeteo) -> ดึงตรง (useProxy = false)
+            const aData = await fetchJson(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`, false);
             if (aData && aData.current) {
                 const pm = Math.round(aData.current.pm2_5);
                 document.getElementById('pm-val').innerHTML = `${pm} <span class="pm-unit">μg/m³</span>`;
@@ -336,9 +360,12 @@
                 if(pm <= 25) { sEl.innerText = "ดี/ปานกลาง"; sEl.classList.add('status-good'); }
                 else if(pm <= 50) { sEl.innerText = "เริ่มมีผลต่อสุขภาพ"; sEl.classList.add('status-moderate'); }
                 else { sEl.innerText = "อันตราย"; sEl.classList.add('status-vbad'); }
+            } else {
+                document.getElementById('pm-val').innerText = "--";
+                document.getElementById('pm-status').innerText = "โหลดไม่ได้";
             }
 
-            // 3. Water Level (ThaiWater API v3 - Logic from main.py)
+            // 3. Water Level (ThaiWater) -> ต้องใช้ Proxy (useProxy = true)
             await fetchWaterData();
         }
 
@@ -352,12 +379,11 @@
 
             try {
                 // 3.1 ดึงข้อมูลระดับน้ำสถานีอินทร์บุรี (จ.สิงห์บุรี Code=17)
-                // ตาม python: api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=17
-                const sbData = await fetchJson('https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=17');
+                // ใช้ Proxy = true เพราะเว็บ ThaiWater ไม่ให้ดึงตรงๆ
+                const sbData = await fetchJson('https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=17', true);
                 
                 let foundLevel = null;
                 if (sbData && sbData.data) {
-                    // วนลูปหาตาม logic python: tumbon="อินทร์บุรี" และ station="อินทร์บุรี"
                     const station = sbData.data.find(item => {
                         const tb = item.geocode?.tumbon_name?.th || "";
                         const st = item.station?.tele_station_name?.th || "";
@@ -375,22 +401,24 @@
                     
                     if (diff > 0) {
                         statusEl.innerText = "น้ำปกติ (ปลอดภัย)";
+                        statusEl.classList.remove('water-high');
                         statusEl.classList.add('water-normal');
                         diffEl.innerText = `ต่ำกว่าตลิ่ง ${diff.toFixed(2)} ม.`;
                     } else {
                         statusEl.innerText = "น้ำล้นตลิ่ง!";
+                        statusEl.classList.remove('water-normal');
                         statusEl.classList.add('water-high');
                         diffEl.innerText = `สูงกว่าตลิ่ง ${Math.abs(diff).toFixed(2)} ม.`;
                     }
                 } else {
                     valEl.innerHTML = `-- <span class="water-unit">ม.</span>`;
                     statusEl.innerText = "ไม่พบข้อมูลสถานี";
-                    diffEl.innerText = "";
+                    diffEl.innerText = "ระบบราชการอาจขัดข้อง";
                 }
 
                 // 3.2 ดึงข้อมูลการระบายน้ำเขื่อนเจ้าพระยา (จ.ชัยนาท Code=18, C.13)
-                // ตาม python: province_code=18 -> tele_station_oldcode="C.13"
-                const cnData = await fetchJson('https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=18');
+                // ใช้ Proxy = true
+                const cnData = await fetchJson('https://api-v3.thaiwater.net/api/v1/thaiwater30/public/waterlevel?province_code=18', true);
                 let foundDischarge = null;
 
                 if (cnData && cnData.data) {
