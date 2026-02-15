@@ -262,7 +262,7 @@
             <div class="pm-status" id="pm-status">กำลังตรวจสอบ...</div>
         </div>
 
-        <!-- การ์ดข้อมูลระดับน้ำแม่น้ำเจ้าพระยา: แสดงระดับน้ำ สถานะ และส่วนต่างจากตลิ่ง -->
+        <!-- การ์ดข้อมูลระดับน้ำแม่น้ำเจ้าพระยา -->
         <div class="data-box" id="water-box" style="display: block; text-align: center;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span class="pm-label">ระดับน้ำเจ้าพระยา</span>
@@ -279,9 +279,6 @@
 
     <script>
         // --- 🔒 การตั้งค่า (Configuration) ---
-        // พิกัดเริ่มต้น "ตลาดอินทร์บุรี" (แก้ไขให้ตรงจุดที่ผู้ใช้ระบุ)
-        // พิกัดนี้อิงจากตำแหน่ง 15.01214775378357, 100.33122177175338 ซึ่งอยู่บริเวณตลาดอินทร์บุรี
-        // หมายเหตุ: หมู่ 6 เป็นพื้นที่ย่อย—ถ้าต้องการความแม่นยำที่สุด ให้กดปุ่ม 📡 ใช้ GPS
         const DEFAULT_LAT = 15.01214775378357;
         const DEFAULT_LON = 100.33122177175338;
         const DEFAULT_LABEL = 'พิกัดเริ่มต้นตลาดอินทร์บุรี';
@@ -307,7 +304,6 @@
         function setLocation(lat, lon, sourceText = '') {
             LAT = lat;
             LON = lon;
-            // เก็บไว้ใช้ครั้งถัดไป
             localStorage.setItem('customLat', String(LAT));
             localStorage.setItem('customLon', String(LON));
             updateLocationUI(sourceText);
@@ -338,18 +334,13 @@
                 },
                 (err) => {
                     console.error('GPS Error:', err);
-                    alert('ขออนุญาตตำแหน่งไม่สำเร็จ (ลองอนุญาต Location แล้วกดใหม่)');
+                    alert('ขออนุญาตตำแหน่งไม่สำเร็จ (ลองตรวจสอบการอนุญาต Location)');
                     updateLocationUI(DEFAULT_LABEL);
                 },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 12000,
-                    maximumAge: 60000
-                }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 } // force fresh GPS
             );
         }
 
-        // โหลดพิกัดที่เคยบันทึกไว้ (ถ้ามี)
         const savedLat = parseFloat(localStorage.getItem('customLat'));
         const savedLon = parseFloat(localStorage.getItem('customLon'));
         if (!Number.isNaN(savedLat) && !Number.isNaN(savedLon)) {
@@ -358,69 +349,25 @@
         }
         updateLocationUI(LAT === DEFAULT_LAT && LON === DEFAULT_LON ? DEFAULT_LABEL : 'ตำแหน่งที่บันทึกไว้');
 
-
         const WEATHER_CODE_TH = {
-            0: "ท้องฟ้าโปร่ง",
-            1: "มีเมฆเล็กน้อย",
-            2: "มีเมฆบางส่วน",
-            3: "เมฆมาก",
-            45: "หมอก",
-            48: "หมอก (มีน้ำค้างแข็ง)",
-            51: "ละอองฝนเบา",
-            53: "ละอองฝนปานกลาง",
-            55: "ละอองฝนหนัก",
-            56: "ฝนเยือกแข็งเบา",
-            57: "ฝนเยือกแข็งหนัก",
-            61: "ฝนเบา",
-            63: "ฝนปานกลาง",
-            65: "ฝนหนัก",
-            66: "ฝนเยือกแข็งเบา",
-            67: "ฝนเยือกแข็งหนัก",
-            71: "หิมะเบา",
-            73: "หิมะปานกลาง",
-            75: "หิมะหนัก",
-            77: "เม็ดหิมะ",
-            80: "ฝนโปรยเบา",
-            81: "ฝนโปรยปานกลาง",
-            82: "ฝนโปรยหนัก",
-            85: "หิมะโปรยเบา",
-            86: "หิมะโปรยหนัก",
-            95: "พายุฝนฟ้าคะนอง",
-            96: "พายุฝนฟ้าคะนอง (ลูกเห็บเล็ก)",
-            99: "พายุฝนฟ้าคะนอง (ลูกเห็บหนัก)"
+            0: "ท้องฟ้าโปร่ง", 1: "มีเมฆเล็กน้อย", 2: "มีเมฆบางส่วน", 3: "เมฆมาก",
+            45: "หมอก", 48: "หมอก (มีน้ำค้างแข็ง)", 51: "ละอองฝนเบา", 53: "ละอองฝนปานกลาง",
+            55: "ละอองฝนหนัก", 61: "ฝนเบา", 63: "ฝนปานกลาง", 65: "ฝนหนัก",
+            80: "ฝนโปรยเบา", 81: "ฝนโปรยปานกลาง", 82: "ฝนโปรยหนัก", 95: "พายุฝนฟ้าคะนอง",
+            96: "พายุฝนฟ้าคะนอง (ลูกเห็บเล็ก)", 99: "พายุฝนฟ้าคะนอง (ลูกเห็บหนัก)"
         };
 
-        // --- 💧 การตั้งค่าสำหรับระดับน้ำ ---
-        // กำหนดระดับตลิ่งอ้างอิง (ม.) ตามที่ผู้ใช้กำหนด
         const WATER_BANK_LEVEL = 13;
 
-        /**
-         * คำนวณสถานะน้ำตามสัดส่วนของระดับน้ำต่อระดับตลิ่ง
-         * อิงเกณฑ์จาก Thaiwater: <=10% น้ำน้อยวิกฤติ, >10-30% น้ำน้อย, >30-70% น้ำปกติ, >70-100% น้ำมาก, >100% น้ำล้นตลิ่ง
-         * คืนค่าออบเจ็กต์ { label: 'น้ำปกติ', className: 'water-normal' }
-         */
         function getWaterStatus(ratio) {
-            if (!isFinite(ratio)) {
-                return { label: 'ไม่พบข้อมูล', className: '' };
-            }
-            if (ratio <= 10) {
-                return { label: 'น้ำน้อยวิกฤติ', className: 'water-low-critical' };
-            } else if (ratio <= 30) {
-                return { label: 'น้ำน้อย', className: 'water-low' };
-            } else if (ratio <= 70) {
-                return { label: 'น้ำปกติ', className: 'water-normal' };
-            } else if (ratio <= 100) {
-                return { label: 'น้ำมาก', className: 'water-high' };
-            } else {
-                return { label: 'น้ำล้นตลิ่ง', className: 'water-flood' };
-            }
+            if (!isFinite(ratio)) return { label: 'ไม่พบข้อมูล', className: '' };
+            if (ratio <= 10) return { label: 'น้ำน้อยวิกฤติ', className: 'water-low-critical' };
+            else if (ratio <= 30) return { label: 'น้ำน้อย', className: 'water-low' };
+            else if (ratio <= 70) return { label: 'น้ำปกติ', className: 'water-normal' };
+            else if (ratio <= 100) return { label: 'น้ำมาก', className: 'water-high' };
+            else return { label: 'น้ำล้นตลิ่ง', className: 'water-flood' };
         }
 
-        /**
-         * อัปเดต UI ส่วนระดับน้ำ
-         * @param {number|null} level ระดับน้ำปัจจุบัน (ม.)
-         * @param {string|null} timeStr เวลาอัปเดต (HH:MM)
-         */
         function updateWaterUI(level, timeStr) {
             const valEl = document.getElementById('water-val');
             const statusEl = document.getElementById('water-status');
@@ -429,44 +376,44 @@
             if (!valEl || !statusEl || !diffEl || !timeEl) return;
 
             if (typeof level === 'number' && !Number.isNaN(level)) {
-                // แสดงค่า
                 valEl.innerHTML = `${level.toFixed(2)} <span class="water-unit">ม.</span>`;
-                // คำนวณสัดส่วนและส่วนต่าง
                 const ratio = (level / WATER_BANK_LEVEL) * 100;
                 const diff = WATER_BANK_LEVEL - level;
                 const { label, className } = getWaterStatus(ratio);
                 statusEl.className = 'water-status ' + className;
                 statusEl.innerText = label;
-                // ข้อความส่วนต่าง
-                if (diff >= 0) {
-                    diffEl.innerText = `ต่ำกว่าตลิ่ง ${diff.toFixed(2)} ม.`;
-                } else {
-                    diffEl.innerText = `สูงกว่าตลิ่ง ${Math.abs(diff).toFixed(2)} ม.`;
-                }
-                // เวลา
+                
+                if (diff >= 0) diffEl.innerText = `ต่ำกว่าตลิ่ง ${diff.toFixed(2)} ม.`;
+                else diffEl.innerText = `สูงกว่าตลิ่ง ${Math.abs(diff).toFixed(2)} ม.`;
+                
                 timeEl.innerText = timeStr ? `อัปเดต ${timeStr} น.` : '';
             } else {
                 valEl.innerHTML = `-- <span class="water-unit">ม.</span>`;
                 statusEl.className = 'water-status';
                 statusEl.innerText = 'ไม่พบข้อมูลน้ำ';
                 diffEl.innerText = '';
-                timeEl.innerText = '';
+                timeEl.innerText = 'ระบบราชการอาจขัดข้อง';
             }
         }
 
-        /**
-         * ดึงข้อมูลระดับน้ำจาก Thaiwater (wl warning JSON) และกรองสถานีอินทร์บุรี จ.สิงห์บุรี
-         */
+        // --- 🌊 แก้ไขการดึงข้อมูลน้ำ (Fix) ---
         async function fetchWaterLevel() {
+            // สร้าง timestamp เพื่อป้องกันการจำค่าเดิม (Cache Busting)
+            const ts = new Date().getTime();
+            const targetUrl = `https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning?_=${ts}`;
+            
+            // เรียงลำดับ URL ใหม่: ให้ Proxy ขึ้นก่อน เพราะ Mobile Web มักติด CORS
             const urls = [
-                'https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning',
-                'https://corsproxy.io/?https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning',
-                'https://api.allorigins.win/raw?url=https://tiwrm.hii.or.th/v3/json/telemetering/wl/warning'
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+                `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+                targetUrl // เก็บตัวจริงไว้ท้ายสุดเผื่อฟลุ๊ค
             ];
+
             let data = null;
             for (const url of urls) {
                 try {
-                    const res = await fetch(url);
+                    console.log("Trying water API:", url);
+                    const res = await fetch(url, { cache: "no-store" }); // บังคับไม่เก็บ Cache
                     if (!res.ok) continue;
                     const json = await res.json().catch(() => null);
                     if (Array.isArray(json)) {
@@ -474,64 +421,63 @@
                         break;
                     }
                 } catch (err) {
-                    // ignore and try next
+                    // console.warn('Water fetch failed:', url);
                 }
             }
+
             if (!Array.isArray(data)) {
                 updateWaterUI(null, null);
                 return;
             }
-            // หา station อินทร์บุรี จังหวัดสิงห์บุรี
+
+            // กรองหา อินทร์บุรี + สิงห์บุรี
             const station = data.find(item => {
                 try {
-                    // ตัวอักษรไทยอาจเข้ารหัส unicode: ใช้ includes เพื่อค้นหาผ่านชื่อและอำเภอ/จังหวัด
                     return (
                         (item.name && item.name.includes('อินทร์บุรี')) ||
                         (item.amphoe_name && item.amphoe_name.includes('อินทร์บุรี'))
                     ) && (item.province_name && item.province_name.includes('สิงห์บุรี'));
-                } catch (e) {
-                    return false;
-                }
+                } catch (e) { return false; }
             });
+
             if (!station) {
                 updateWaterUI(null, null);
                 return;
             }
-            // ระดับน้ำ
+
             let level = parseFloat(station.wl_present);
             if (Number.isNaN(level)) level = null;
-            // เวลา: ใช้ HH:MM จาก station.time (format HH:MM:SS)
+            
             let timeStr = '';
-            if (station.time) {
-                const hhmm = station.time.substring(0,5);
-                timeStr = hhmm;
-            }
+            if (station.time) timeStr = station.time.substring(0,5);
+            
             updateWaterUI(level, timeStr);
         }
 
-        async function fetchJson(url, timeoutMs = 12000) {
+        async function fetchJson(url, timeoutMs = 15000) { // เพิ่มเวลา Timeout
             const controller = new AbortController();
             const t = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                const res = await fetch(url, { signal: controller.signal });
-                const data = await res.json().catch(() => null);
-                if (!res.ok) {
-                    const reason = data?.reason || data?.error || data?.message || `HTTP ${res.status}`;
-                    throw new Error(reason);
-                }
-                return data;
+                // เพิ่ม cache: "no-store" เพื่อความสดใหม่
+                const res = await fetch(url, { signal: controller.signal, cache: "no-store" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
             } finally {
                 clearTimeout(t);
             }
         }
 
         async function fetchData() {
-            const updateTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            const now = new Date();
+            const updateTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             document.getElementById('last-update').innerText = `อัปเดตเมื่อ: ${updateTime} น.`;
 
-            // 1) สภาพอากาศ (Open-Meteo: ไม่ต้องใช้ API Key)
+            // Cache Buster สำหรับ Weather & Air
+            const ts = now.getTime();
+
+            // 1) สภาพอากาศ
             try {
-                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok`;
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FBangkok&_=${ts}`;
                 const wData = await fetchJson(weatherUrl);
 
                 const temp = wData?.current?.temperature_2m;
@@ -540,63 +486,45 @@
 
                 if (typeof temp !== "number") throw new Error("ไม่พบอุณหภูมิ");
                 document.getElementById('temp').innerText = Math.round(temp) + "°";
+                document.getElementById('humidity').innerText = (typeof humidity === "number") ? Math.round(humidity) + "%" : "--%";
 
-                if (typeof humidity === "number") {
-                    document.getElementById('humidity').innerText = Math.round(humidity) + "%";
-                } else {
-                    document.getElementById('humidity').innerText = "--%";
-                }
-
-                const desc = (code in WEATHER_CODE_TH) ? WEATHER_CODE_TH[code] : `รหัสอากาศ: ${code ?? "-"}`;
+                const desc = (code in WEATHER_CODE_TH) ? WEATHER_CODE_TH[code] : "-";
                 document.getElementById('weather-desc').innerText = desc;
             } catch (error) {
                 console.error("Weather Error:", error);
                 document.getElementById('temp').innerText = "--°";
-                document.getElementById('humidity').innerText = "--%";
-                document.getElementById('weather-desc').innerText = "ดึงข้อมูลอากาศไม่ได้";
             }
 
-            // 2) ฝุ่น PM2.5 (Open-Meteo Air Quality: ไม่ต้องใช้ API Key)
+            // 2) ฝุ่น PM2.5
             try {
-                const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok`;
+                const airUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=pm2_5&timezone=Asia%2FBangkok&_=${ts}`;
                 const airData = await fetchJson(airUrl);
-
                 const pm25 = airData?.current?.pm2_5;
-                if (typeof pm25 !== "number") throw new Error("ไม่พบค่า PM2.5");
-
+                
+                if (typeof pm25 !== "number") throw new Error("ไม่พบค่า PM");
+                
                 const pm = Math.round(pm25);
-
-                // แสดงค่า
                 const pmEl = document.getElementById('pm-val');
-                if (pmEl) pmEl.innerHTML = `${pm} <span class="pm-unit">μg/m³</span>`;
-
-                // สถานะ (สี)
                 const statusEl = document.getElementById('pm-status');
+                
+                if (pmEl) pmEl.innerHTML = `${pm} <span class="pm-unit">μg/m³</span>`;
+                
                 if (statusEl) {
                     let label = "อัปเดตแล้ว";
                     statusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
-
-                    // แบ่งช่วงแบบง่าย ๆ เพื่อให้ผู้ใช้เข้าใจเร็ว (ไม่ใช่มาตรฐานทางการ)
                     if (pm <= 10) { label = "ดีมาก"; statusEl.classList.add('status-good'); }
                     else if (pm <= 25) { label = "ปานกลาง"; statusEl.classList.add('status-moderate'); }
                     else if (pm <= 50) { label = "เริ่มมีผลต่อสุขภาพ"; statusEl.classList.add('status-bad'); }
                     else { label = "อันตราย"; statusEl.classList.add('status-vbad'); }
-
                     statusEl.innerText = label;
                 }
             } catch (error) {
-                console.error("Air Quality Error:", error);
-                const pmEl = document.getElementById('pm-val');
-                if (pmEl) pmEl.innerHTML = `-- <span class="pm-unit">μg/m³</span>`;
-                const statusEl = document.getElementById('pm-status');
-                if (statusEl) {
-                    statusEl.classList.remove('status-good','status-moderate','status-bad','status-vbad');
-                    statusEl.innerText = "ไม่พบข้อมูลฝุ่น";
-                }
+                console.error("Air Error:", error);
             }
 
-            // 3) ระดับน้ำ (ดึงข้อมูลจาก Thaiwater ผ่าน JSON และแสดงผล)
+            // 3) ระดับน้ำ (เรียกฟังก์ชันที่แก้แล้ว)
             try {
+                document.getElementById('water-status').innerText = 'กำลังดึงข้อมูล...';
                 await fetchWaterLevel();
             } catch (err) {
                 console.error('Water Error:', err);
@@ -604,8 +532,11 @@
             }
         }
 
-        // เรียกทำงานทันทีเมื่อเปิดเว็บ
+        // เรียกทำงานทันที
         fetchData();
+        
+        // Auto Refresh ทุก 10 นาที (ถ้าเปิดหน้านี้ทิ้งไว้)
+        setInterval(fetchData, 600000);
     </script>
 </body>
 </html>
